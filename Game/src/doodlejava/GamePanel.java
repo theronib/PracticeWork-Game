@@ -1,13 +1,21 @@
 package doodlejava;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
 import oneiros.games.AnimationListener;
 import oneiros.games.NoHoldingKeyListener;
 import oneiros.games.OSprite;
+import oneiros.images.Image;
 import oneiros.physic.OVector2D;
 import oneiros.sound.SoundManager;
 import util.Resource;
@@ -18,15 +26,20 @@ public class GamePanel extends OSprite {
         SoundManager.add("jump", Resource.getSoundFile("jump.wav"));
         SoundManager.add("fall", Resource.getSoundFile("pada.wav"));
     }
+
     private static final OVector2D GRAVITY_VECTOR = new OVector2D(0.2, 270);
     private static final double AIR_FRICTION = 0.02;
     private static final int STAGE_SCROLL_LIMIT = 300;
+
+
     private Doodle doodle;
     private ArrayList<Platform> platforms;
+    private ArrayList<Bonus> bonuses;
     private int score;
     private NewGameListener gameListener;
     private MovingDoodleKeyListener movingDoodleKeyListener = new MovingDoodleKeyListener();
     private int currentLevel;
+    private ArrayList<Ball> balls; 
 
     public GamePanel(Dimension size) {
         super(Resource.getImage("jungle-of-trees-800-l.jpg"));
@@ -36,6 +49,8 @@ public class GamePanel extends OSprite {
         this.addKeyListener(this.movingDoodleKeyListener);
 
         this.newGame();
+        
+        
     }
 
     public void start() {
@@ -44,13 +59,24 @@ public class GamePanel extends OSprite {
     }
 
     private void newGame() {
-    	this.doodle = new Doodle();
+    	
+    	
+        this.doodle = new Doodle();
         this.doodle.addAnimationListener(new DoodleAnimationListener());
         this.add(this.doodle);
         this.doodle.setLocation((this.getWidth() - this.doodle.getWidth()) / 2,
                 this.getHeight() - this.doodle.getHeight());
         this.doodle.setAcceleration(GRAVITY_VECTOR);
         this.platforms = new ArrayList<Platform>();
+        this.balls = new ArrayList<Ball>();
+        for (int i = 0; i < 3; i++) {
+            Ball ball = new Ball();
+            ball.setLocation((int) (Math.random() * (getWidth() - ball.getWidth())), -ball.getHeight());
+            this.add(ball);
+            this.balls.add(ball);
+        }
+    
+        this.bonuses = new ArrayList<Bonus>(); // Додано список бонусів
 
         for (int i = 0; i < 10; i++) {
             Platform p = new Platform();
@@ -59,8 +85,9 @@ public class GamePanel extends OSprite {
             this.add(p);
             this.platforms.add(p);
         }
+
         this.score = 0;
-        this.currentLevel = 1; // Встановлення початкового рівня
+        this.currentLevel = 1;
     }
 
     public void gameOver() {
@@ -81,48 +108,84 @@ public class GamePanel extends OSprite {
     }
 
     private void moveStageUp() {
-    	 if (this.doodle.getY() < STAGE_SCROLL_LIMIT) {
-    	        int offset = STAGE_SCROLL_LIMIT - this.doodle.getY();
-    	        this.doodle.setY(STAGE_SCROLL_LIMIT);
-    	        for (Platform p : platforms) {
-    	            p.setLocation(p.getX(), p.getY() + offset);
-    	            if (p.getY() > this.getHeight()) {
-    	                p.setLocation((int) (Math.random() * (getWidth() - p.getWidth())),
-    	                        ((int) (Math.random() * 50) - 50));
-    	                p.reverseDirection();
-    	            }
-    	        }
-    	        this.score += offset / 2;
-    	        if (this.gameListener != null) {
-    	            this.gameListener.updateScore(this.score);
-    	        }
-    	        
-    	        // Перевірка умов переходу на наступний рівень
-    	        if (this.score >= 1000 && this.currentLevel == 1) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 2!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	            this.currentLevel = 2;
-    	        } else if (this.score >= 000 && this.currentLevel == 2) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 3!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	            this.currentLevel = 3;
-    	        } else if (this.score >= 6000 && this.currentLevel == 3) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 4!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	            this.currentLevel = 4;
-    	        }
-    	    }
+        if (this.doodle.getY() < STAGE_SCROLL_LIMIT) {
+            int offset = STAGE_SCROLL_LIMIT - this.doodle.getY();
+            this.doodle.setY(STAGE_SCROLL_LIMIT);
+            for (Platform p : platforms) {
+                p.setLocation(p.getX(), p.getY() + offset);
+                if (p.getY() > this.getHeight()) {
+                    p.setLocation((int) (Math.random() * (getWidth() - p.getWidth())),
+                            ((int) (Math.random() * 50) - 50));
+                    p.reverseDirection();
+                }
+            }
+            this.score += offset / 2;
+            if (this.gameListener != null) {
+                this.gameListener.updateScore(this.score);
+            }
+            
+            // Перевірка умов переходу на наступний рівень
+            if (this.score >= 1000 && this.currentLevel == 1) {
+                JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 2!",
+                        "Level Up", JOptionPane.INFORMATION_MESSAGE);               
+                this.currentLevel = 2;
+                setBackground(Resource.getImage("secondLevel copy.jpg"));
+            } 
+            else if (this.score >= 2000 && this.currentLevel == 2) {
+                JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 3!",
+                        "Level Up", JOptionPane.INFORMATION_MESSAGE);
+                this.currentLevel = 3;
+                setBackground(Resource.getImage("thirdLevel copy 2.jpg"));
+            } 
+            else if (this.score >= 3000 && this.currentLevel == 3) {
+                JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 4!",
+                        "Level Up", JOptionPane.INFORMATION_MESSAGE);
+                this.currentLevel = 4;
+                setBackground(Resource.getImage("fourthLevel copy 2.jpg"));
+                
+            } 
+            else if (this.score >= 4000 && this.currentLevel == 4) {
+                JOptionPane.showMessageDialog(null, "Congratulations!",
+                        "GameOver", JOptionPane.INFORMATION_MESSAGE);
+                this.gameOver();
+            }
+
+            // Оновити позицію бонусів
+            for (Bonus bonus : bonuses) {
+                bonus.updatePosition(offset);
+                if (doodle.getBounds().intersects(bonus.getBounds())) {
+                    score += bonus.getPoints();
+                    if (gameListener != null) {
+                        gameListener.updateScore(score);
+                    }
+                }
+            }
+        }
     }
+//    private void updateBalls() {
+//
+//        for (Ball ball : balls) {
+//			ball.update(time);  // Оновлення позиції м'ячиків
+//            if (ball.getBounds().intersects(doodle.getBounds())) {
+//                gameOver();  // Гра закінчується, якщо м'ячик перетинає персонажа
+//            }
+//            if (ball.getY() > getHeight()) {
+//                ball.setLocation((int) (Math.random() * (getWidth() - ball.getWidth())), -ball.getHeight());
+//            }
+//        }
+//    }
 
     private void updatePlatforms() {
         for (Platform platform : platforms) {
-            platform.update();
+            platform.update(score);
         }
     }
 
     public void setNewGameListener(NewGameListener scoreUpdater) {
         this.gameListener = scoreUpdater;
     }
+    
+
 
     private class DoodleAnimationListener extends AnimationListener {
 
@@ -132,7 +195,6 @@ public class GamePanel extends OSprite {
                 SoundManager.play("fall");
                 gameOver();
             } else {
-
                 double x = doodle.getVelocity().getX();
                 if (Math.abs(x) < 0.1) {
                     doodle.setVelocityX(0);
@@ -170,7 +232,6 @@ public class GamePanel extends OSprite {
             }
         }
     }
-
 
     private class MovingDoodleKeyListener extends NoHoldingKeyListener {
 
@@ -225,6 +286,7 @@ interface NewGameListener {
     
     public void gameOver();
 }
+
 
 
 
