@@ -26,7 +26,6 @@ public class GamePanel extends OSprite {
     private int score;
     private NewGameListener gameListener;
     private MovingDoodleKeyListener movingDoodleKeyListener = new MovingDoodleKeyListener();
-    private int currentLevel;
 
     public GamePanel(Dimension size) {
         super(Resource.getImage("jungle-of-trees-800-l.jpg"));
@@ -44,7 +43,7 @@ public class GamePanel extends OSprite {
     }
 
     private void newGame() {
-    	this.doodle = new Doodle();
+        this.doodle = new Doodle();
         this.doodle.addAnimationListener(new DoodleAnimationListener());
         this.add(this.doodle);
         this.doodle.setLocation((this.getWidth() - this.doodle.getWidth()) / 2,
@@ -60,7 +59,6 @@ public class GamePanel extends OSprite {
             this.platforms.add(p);
         }
         this.score = 0;
-        this.currentLevel = 1; // Встановлення початкового рівня
     }
 
     public void gameOver() {
@@ -81,41 +79,22 @@ public class GamePanel extends OSprite {
     }
 
     private void moveStageUp() {
-    	 if (this.doodle.getY() < STAGE_SCROLL_LIMIT) {
-    	        int offset = STAGE_SCROLL_LIMIT - this.doodle.getY();
-    	        this.doodle.setY(STAGE_SCROLL_LIMIT);
-    	        for (Platform p : platforms) {
-    	            p.setLocation(p.getX(), p.getY() + offset);
-    	            if (p.getY() > this.getHeight()) {
-    	                p.setLocation((int) (Math.random() * (getWidth() - p.getWidth())),
-    	                        ((int) (Math.random() * 50) - 50));
-    	                p.reverseDirection();
-    	            }
-    	        }
-    	        this.score += offset / 2;
-    	        if (this.gameListener != null) {
-    	            this.gameListener.updateScore(this.score);
-    	        }
-    	        
-    	        // Перевірка умов переходу на наступний рівень
-    	        if (this.score >= 1000 && this.currentLevel == 1) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 2!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	            this.currentLevel = 2;
-    	        } else if (this.score >= 2000 && this.currentLevel == 2) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 3!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	            this.currentLevel = 3;
-    	        } else if (this.score >= 6000 && this.currentLevel == 3) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You've reached Level 4!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	            this.currentLevel = 4;
-    	        }
-    	        else if (this.score >= 7000 && this.currentLevel == 4) {
-    	            JOptionPane.showMessageDialog(null, "Congratulations! You won!",
-    	                    "Level Up", JOptionPane.INFORMATION_MESSAGE);
-    	        }
-    	    }
+        if (this.doodle.getY() < STAGE_SCROLL_LIMIT) {
+            int offset = STAGE_SCROLL_LIMIT - this.doodle.getY();
+            this.doodle.setY(STAGE_SCROLL_LIMIT);
+            for (Platform p : platforms) {
+                p.setLocation(p.getX(), p.getY() + offset);
+                if (p.getY() > this.getHeight()) {
+                    p.setLocation((int) (Math.random() * (getWidth() - p.getWidth())),
+                            ((int) (Math.random() * 50) - 50));
+                    p.reverseDirection();
+                }
+            }
+            this.score += offset / 2;
+            if (this.gameListener != null) {
+                this.gameListener.updateScore(this.score);
+            }
+        }
     }
 
     private void updatePlatforms() {
@@ -228,7 +207,8 @@ interface NewGameListener {
     public void updateScore(int score);
     
     public void gameOver();
+    
+    
 }
-
 
 
